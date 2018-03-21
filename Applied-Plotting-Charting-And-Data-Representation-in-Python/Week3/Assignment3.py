@@ -1,3 +1,4 @@
+
 # coding: utf-8
 
 # # Assignment 3 - Building a Custom Visualization
@@ -11,7 +12,7 @@
 # &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In Proceedings of the SIGCHI Conference on Human Factors in Computing Systems (pp. 571-580). ACM. ([video](https://www.youtube.com/watch?v=BI7GAs-va-Q))
 # 
 # 
-# In this [paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/Ferreira_Fisher_Sample_Oriented_Tasks.pdf) the authors describe the challenges users face when trying to make judgements about probabilistic data generated through samples. As an example, they look at a bar chart of four years of data (replicated below in Figure 1). Each year has a y-axis value, which is derived from a sample of a larger dataset. For instance, the first value might be the number votes in a given district or riding for 1992, with the average being around 33,000. On top of this is plotted the confidence interval -- the range of the number of votes which encapsulates 95% of the data (see the boxplot lectures for more information, and the yerr parameter of barcharts).
+# In this [paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/Ferreira_Fisher_Sample_Oriented_Tasks.pdf) the authors describe the challenges users face when trying to make judgements about probabilistic data generated through samples. As an example, they look at a bar chart of four years of data (replicated below in Figure 1). Each year has a y-axis value, which is derived from a sample of a larger dataset. For instance, the first value might be the number votes in a given district or riding for 1992, with the average being around 33,000. On top of this is plotted the 95% confidence interval for the mean (see the boxplot lectures for more information, and the yerr parameter of barcharts).
 # 
 # <br>
 # <img src="readonly/Assignment3Fig1.png" alt="Figure 1" style="width: 400px;"/>
@@ -39,90 +40,113 @@
 # **Hardest option:** Allow the user to interactively set a range of y values they are interested in, and recolor based on this (e.g. a y-axis band, see the paper for more details).
 # 
 # ---
+# 
+# *Note: The data given for this assignment is not the same as the data used in the article and as a result the visualizations may look a little different.*
 
-# In[1]:
+# In[2]:
 
 # Use the following data for this assignment:
-get_ipython().magic('matplotlib notebook')
+
 import pandas as pd
 import numpy as np
 
 np.random.seed(12345)
 
-df = pd.DataFrame([np.random.normal(33500,150000,3650), 
-                   np.random.normal(41000,90000,3650), 
-                   np.random.normal(41000,120000,3650), 
-                   np.random.normal(48000,55000,3650)], 
+df = pd.DataFrame([np.random.normal(32000,200000,3650), 
+                   np.random.normal(43000,100000,3650), 
+                   np.random.normal(43500,140000,3650), 
+                   np.random.normal(48000,70000,3650)], 
                   index=[1992,1993,1994,1995])
 df
 
 
-# In[2]:
-
-from scipy import stats
-year_avg = df.mean(axis = 1)
-year_std = df.std(axis = 1)
-yerr = year_std / np.sqrt(df.shape[1]) * stats.t.ppf(1-0.05/2, df.shape[1]-1)
-import matplotlib.pyplot as plt
-plt.figure()
-plt.show()
-bars = plt.bar(range(df.shape[0]), year_avg, yerr = yerr, color = 'lightslategrey')
-
-
-# In[3]:
-
-yerr, year_avg
-
-
-# In[4]:
-
-fig = plt.gcf()
-
-
 # In[5]:
 
+import matplotlib.pyplot as plt
+
 threshold=42000
+year_avg = df.mean(axis = 1)
+year_std = df.std(axis = 1)
+ind = range(df.shape[0]) # range(0,4)
+width = 0.35
+# For a normal distribution ~95% of the values lie within a window of 4 standard deviations around the mean, or in other words, 
+#95% of the values are within plus/minus 2 standard deviations from the mean.  Use 2 * std to estimate the 95 % interval
+yerr = 2*year_std
+
+fig, ax = plt.subplots()
+#return the x coordinates of the bars (number of rows), height, width, and y error bar  
+bars = plt.bar(ind, year_avg, width, yerr = yerr, color = 'lightslategrey')
+ax.set_title('A bar chart with 95% confidence intervals representing the mean value over a dataset.')
+ax.set_xticks(ind)
+ax.set_xticklabels(('1992', '1993', '1994', '1995'))
+fig = plt.gcf()
 plt.axhline(y = threshold, color = 'grey', alpha = 0.5)
+plt.show()
 
 
 # In[6]:
 
+
 import matplotlib.colors as mcol
 import matplotlib.cm as cm
 
+threshold= 12000
+year_avg = df.mean(axis = 1)
+year_std = df.std(axis = 1)
+ind = range(df.shape[0]) # range(0,4)
+width = 0.35
+# For a normal distribution ~95% of the values lie within a window of 4 standard deviations around the mean, or in other words, 
+#95% of the values are within plus/minus 2 standard deviations from the mean.  Use 2 * std to estimate the 95 % interval
+yerr = 2*year_std
 
-# In[7]:
+fig, ax = plt.subplots()
+#return the x coordinates of the bars (number of rows), height, width, and y error bar  
+bars = plt.bar(ind, year_avg, width, yerr=yerr, color = 'lightslategrey')
+fig = plt.gcf()
+axline = plt.axhline(y = threshold, color = 'green', alpha = 0.5)
 
-cm1 = mcol.LinearSegmentedColormap.from_list("MyCmapName",["b", "white", "purple"])
+cm1 = mcol.LinearSegmentedColormap.from_list("MyCmapName",["blue", "white", "purple"])
 cpick = cm.ScalarMappable(cmap=cm1)
 cpick.set_array([])
-cpick
-
-
-# In[8]:
-
-percentages = []
-for bar, yerr_ in zip(bars, yerr):
-    low = bar.get_height() - yerr_
-    high = bar.get_height() + yerr_
-    percentage = (high-threshold)/(high-low)
-    if percentage>1: percentage = 1
-    if percentage<0: percentage=0
-    percentages.append(percentage)
-percentages
-
-
-# In[9]:
-
-cpick.to_rgba(percentages)
-
-
-# In[10]:
-
-bars = plt.bar(range(df.shape[0]), year_avg, yerr = yerr, color = cpick.to_rgba(percentages))
 plt.colorbar(cpick, orientation='horizontal')
 
+ax.set_title('Comparing bars to each other. We compare the white bar to the others; dark blue means “certainly below”, while dark purple means “certainly above.')
+plt.xticks(ind, df.index, alpha = 0.8)
 
-# In[11]:
+def percentages(threshold):
+    percentages = []
+    for bar in bars:
+        percentage = (bar.get_height()-threshold)/bar.get_height()
+        if percentage>1: percentage = 1
+        if percentage<0: percentage=0
+        percentages.append(percentage)
+    return percentages
 
-plt.xticks(range(df.shape[0]), df.index, alpha = 0.8)
+def update(threshold):
+    axline.set_ydata(threshold)
+    perc = percentages(threshold)
+    for bar, p in zip(bars, perc):
+        #print('treshold =', p)
+        bar.set_color(cpick.to_rgba(p))
+      
+# update once before showing
+update(threshold)
+
+def onMouseMove(event):
+    if event.inaxes == ax:
+        update(event.ydata)
+        fig.canvas.draw_idle()
+
+fig.canvas.mpl_connect('motion_notify_event', onMouseMove)
+plt.show()
+
+
+# In[31]:
+
+
+
+
+# In[ ]:
+
+
+
