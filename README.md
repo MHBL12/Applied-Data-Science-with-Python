@@ -1,2 +1,2 @@
 # Applied-Data-Science-with-Python
-Repo for Applied Data Science with Python by University of Michigan on Coursera
+Applied Data Science with Python, a 5-course specialization by University of Michigan on Coursera. Specialization Certificate earned on June 17, 2018
